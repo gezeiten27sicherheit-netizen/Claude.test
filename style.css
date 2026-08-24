@@ -1,0 +1,163 @@
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+  background: #0a0e14;
+  font-family: 'Segoe UI', 'Trebuchet MS', system-ui, sans-serif;
+  color: #eef4ff;
+  user-select: none;
+  -webkit-user-select: none;
+}
+#game-canvas { position: fixed; inset: 0; display: block; }
+
+#hud, #overlay-ui { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+
+/* ---------- Hearts + Stamina ---------- */
+#top-left { position: fixed; top: 16px; left: 16px; z-index: 15; }
+#hearts { display: flex; gap: 4px; flex-wrap: wrap; max-width: 260px; margin-bottom: 8px; filter: drop-shadow(0 2px 3px rgba(0,0,0,.6)); }
+#hearts.flash { animation: flash 0.15s ease 2; }
+@keyframes flash { 50% { filter: drop-shadow(0 0 8px #ff2b45) brightness(1.8); } }
+.heart { width: 20px; height: 18px; position: relative; }
+.heart::before, .heart::after {
+  content: ''; position: absolute; top: 0; width: 11px; height: 16px; border-radius: 10px 10px 0 0;
+  background: #333;
+}
+.heart::before { left: 0; transform: rotate(-45deg); transform-origin: 100% 100%; }
+.heart::after { right: 0; transform: rotate(45deg); transform-origin: 0 100%; }
+.heart.full::before, .heart.full::after { background: #ff4d63; }
+.heart.half::before { background: #ff4d63; }
+.heart.half::after { background: #3a2226; }
+.heart.empty::before, .heart.empty::after { background: #3a2226; }
+
+#stamina-wrap { width: 46px; height: 46px; transition: opacity .3s; }
+#stamina-wheel {
+  width: 100%; height: 100%; border-radius: 50%;
+  background: conic-gradient(#7fe8c0 360deg, rgba(255,255,255,.15) 0deg);
+  border: 2px solid rgba(255,255,255,.35);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,.5);
+}
+#stamina-wheel::after { content: '◆'; font-size: 14px; color: #0a2e22; }
+
+/* ---------- Clock ---------- */
+#clock {
+  position: fixed; top: 16px; right: 16px; z-index: 15;
+  background: rgba(10,14,20,.55); border: 1px solid rgba(255,255,255,.2);
+  padding: 6px 12px; border-radius: 20px; font-size: 14px; letter-spacing: .5px;
+}
+
+/* ---------- Crosshair ---------- */
+#crosshair {
+  position: fixed; top: 50%; left: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; z-index: 15;
+  --mine: 0;
+}
+#crosshair::before, #crosshair::after {
+  content: ''; position: absolute; background: rgba(255,255,255,.85); box-shadow: 0 0 2px rgba(0,0,0,.8);
+}
+#crosshair::before { left: 50%; top: 3px; bottom: 3px; width: 2px; margin-left: -1px; }
+#crosshair::after { top: 50%; left: 3px; right: 3px; height: 2px; margin-top: -1px; }
+#crosshair.targeting-mob::before, #crosshair.targeting-mob::after { background: #ff4d4d; }
+#crosshair .ring {
+  position: absolute; inset: -6px; border-radius: 50%; border: 2px solid transparent;
+}
+#crosshair.mining .ring {
+  border-top-color: #ffd966;
+  transform: rotate(calc(var(--mine) * 360deg));
+}
+
+/* ---------- Hotbar ---------- */
+#hotbar {
+  position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 6px; z-index: 15; pointer-events: auto;
+}
+.slot {
+  width: 52px; height: 52px; background: rgba(10,14,22,.68);
+  border: 2px solid rgba(255,255,255,.25); border-radius: 8px;
+  position: relative; display: flex; align-items: center; justify-content: center;
+  font-size: 24px; cursor: pointer;
+}
+.hotbar-slot.selected { border-color: #ffd966; box-shadow: 0 0 10px rgba(255,217,102,.7); }
+.slot .count {
+  position: absolute; bottom: 2px; right: 5px; font-size: 11px; font-weight: bold;
+  text-shadow: 1px 1px 1px #000;
+}
+.slot .key {
+  position: absolute; top: 2px; left: 5px; font-size: 9px; opacity: .6;
+}
+.slot .dur {
+  position: absolute; bottom: 3px; left: 5px; right: 5px; height: 3px; background: #4caf50; border-radius: 2px;
+  display: none;
+}
+
+/* ---------- Toast ---------- */
+#toast {
+  position: fixed; top: 90px; left: 50%; transform: translateX(-50%);
+  background: rgba(10,14,20,.7); border: 1px solid rgba(255,255,255,.25);
+  padding: 8px 18px; border-radius: 20px; font-size: 14px; opacity: 0; transition: opacity .4s;
+  z-index: 20; pointer-events: none; white-space: nowrap;
+}
+
+/* ---------- Modals ---------- */
+.modal {
+  position: fixed; inset: 0; background: rgba(6,9,14,.75); z-index: 30;
+  display: flex; align-items: center; justify-content: center; pointer-events: auto;
+}
+.modal.hidden { display: none; }
+.modal-box {
+  background: linear-gradient(180deg, #14202e, #0c1420); border: 1px solid rgba(120,180,255,.35);
+  border-radius: 14px; padding: 20px 24px; width: min(560px, 90vw); box-shadow: 0 10px 40px rgba(0,0,0,.6);
+}
+.modal-box h2 { margin: 0 0 4px; font-weight: 600; letter-spacing: .5px; color: #7fe8ff; }
+.modal-box p.hint { margin: 0 0 14px; font-size: 13px; opacity: .75; }
+.grid {
+  display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; margin-bottom: 10px;
+}
+.inv-slot { width: auto; aspect-ratio: 1; font-size: 20px; }
+.inv-slot .tip {
+  position: absolute; bottom: 105%; left: 50%; transform: translateX(-50%);
+  background: #000; color: #fff; font-size: 11px; padding: 3px 6px; border-radius: 4px;
+  white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .15s;
+}
+.inv-slot:hover .tip { opacity: .9; }
+.close-btn, .action-btn {
+  background: #1d3a52; border: 1px solid rgba(255,255,255,.25); color: #eef4ff;
+  padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px;
+}
+.close-btn:hover, .action-btn:hover { background: #2a4d6e; }
+.modal-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+
+.fuse-preview { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 14px 0; font-size: 30px; }
+.fuse-slot-box {
+  width: 64px; height: 64px; border: 2px dashed rgba(255,255,255,.35); border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.04);
+}
+#fuse-result { min-height: 20px; font-size: 13px; color: #ffd966; margin-top: 8px; }
+
+/* ---------- Start / Death screens ---------- */
+#start-screen, #death-screen {
+  position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at center, #16324a 0%, #050a12 80%);
+  flex-direction: column; text-align: center; pointer-events: auto;
+}
+#start-screen.hidden, #death-screen.hidden { display: none; }
+.title {
+  font-size: clamp(30px, 6vw, 56px); font-weight: 800; letter-spacing: 2px;
+  background: linear-gradient(90deg, #ffd966, #7fe8ff);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  margin-bottom: 4px; text-shadow: 0 0 40px rgba(127,232,255,.25);
+}
+.subtitle { opacity: .8; margin-bottom: 24px; font-size: 15px; }
+.controls-box {
+  text-align: left; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.15);
+  border-radius: 12px; padding: 16px 24px; margin-bottom: 26px; font-size: 13px; line-height: 1.9;
+  max-width: 480px;
+}
+.controls-box b { color: #ffd966; }
+.big-btn {
+  background: linear-gradient(180deg, #ffd966, #e0a92c); color: #23150a; border: none;
+  padding: 14px 38px; font-size: 17px; font-weight: 700; border-radius: 10px; cursor: pointer;
+  box-shadow: 0 6px 18px rgba(255,217,102,.35);
+}
+.big-btn:hover { filter: brightness(1.08); }
+#death-screen h1 { color: #ff5b6a; font-size: 42px; margin-bottom: 6px; }
+
+.hidden { display: none !important; }
