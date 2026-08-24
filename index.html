@@ -20,6 +20,8 @@
   <div id="crosshair"><div class="ring"></div></div>
   <div id="toast"></div>
   <div id="hotbar"></div>
+  <div id="ability-hints"></div>
+  <button id="settings-btn" title="Einstellungen">⚙️</button>
 </div>
 
 <div id="inventory-modal" class="modal hidden">
@@ -55,6 +57,18 @@
   </div>
 </div>
 
+<div id="settings-modal" class="modal hidden">
+  <div class="modal-box settings-box">
+    <h2>⚙️ Einstellungen</h2>
+    <p class="hint">Jede Fähigkeit einzeln an-/abschaltbar. Tasten frei belegbar — Knopf klicken, dann Taste drücken (Esc bricht ab).</p>
+    <div id="settings-body" class="settings-body"></div>
+    <div class="modal-footer">
+      <span style="font-size:12px;opacity:.6;">Taste O zum Schließen</span>
+      <button id="settings-close" class="close-btn">Schließen</button>
+    </div>
+  </div>
+</div>
+
 <div id="death-screen" class="modal hidden">
   <h1>Du bist gefallen…</h1>
   <p class="subtitle">Die Wildnis von Hyrule-Craft ist gnadenlos. Versuch's noch einmal.</p>
@@ -66,21 +80,26 @@
   <div class="subtitle">Zelda: Tears of the Kingdom × Minecraft — baue, erkunde, überlebe.</div>
   <div class="controls-box">
     <div><b>WASD</b> — Bewegen &nbsp; <b>Maus</b> — Umsehen</div>
-    <div><b>Leertaste</b> — Springen / Klettern (an Wänden) / Gleiten (in der Luft mit Shift)</div>
-    <div><b>Shift</b> — Sprinten (am Boden) / Gleitschirm öffnen (in der Luft)</div>
+    <div><b>Leertaste</b> — Springen / Klettern (an Wänden)</div>
+    <div><b>Shift</b> — Sprinten (am Boden) / Gleitschirm (in der Luft)</div>
     <div><b>Linksklick</b> — Abbauen / Angreifen &nbsp; <b>Rechtsklick</b> — Platzieren / Essen</div>
-    <div><b>1–9 / Mausrad</b> — Schnellzugriff &nbsp; <b>E</b> — Inventar &nbsp; <b>F</b> — Fusion</div>
-    <div><b>Esc</b> — Maus freigeben</div>
+    <div><b>G</b> — Ultrahand (greifen &amp; bauen) &nbsp; <b>C</b> — Ascend (durch Decken) &nbsp; <b>R</b> — Recall</div>
+    <div><b>1–9 / Mausrad</b> — Schnellzugriff &nbsp; <b>E</b> — Inventar &nbsp; <b>F</b> — Fusion &nbsp; <b>O</b> — Einstellungen</div>
+    <div style="opacity:.7;">Alle Fähigkeiten &amp; Tasten sind in den Einstellungen (⚙️) einzeln konfigurierbar.</div>
   </div>
   <button id="start-btn" class="big-btn">▶ Spiel starten</button>
 </div>
 
 <script src="vendor/three.min.js"></script>
+<script src="src/config.js"></script>
+<script src="src/input.js"></script>
 <script src="src/noise.js"></script>
 <script src="src/items.js"></script>
+<script src="src/textures.js"></script>
 <script src="src/physics.js"></script>
 <script src="src/world.js"></script>
 <script src="src/entities.js"></script>
+<script src="src/props.js"></script>
 <script src="src/player.js"></script>
 <script src="src/ui.js"></script>
 <script src="src/main.js"></script>

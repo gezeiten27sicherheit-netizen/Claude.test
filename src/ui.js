@@ -3,8 +3,9 @@
   const ITEMS = window.G.ITEMS;
 
   class UI {
-    constructor(player) {
+    constructor(player, input) {
       this.player = player;
+      this.input = input;
       this.heldSlot = null;
       this.fuseSlots = [null, null];
       this.toastTimer = 0;
@@ -24,11 +25,18 @@
       this.fuseResult = document.getElementById('fuse-result');
       this.deathScreen = document.getElementById('death-screen');
       this.clock = document.getElementById('clock');
+      this.settingsModal = document.getElementById('settings-modal');
+      this.settingsBody = document.getElementById('settings-body');
+      this.abilityHints = document.getElementById('ability-hints');
 
       this.buildHotbar();
       document.getElementById('fuse-btn').addEventListener('click', () => this.doFuse());
       document.getElementById('inv-close').addEventListener('click', () => this.toggleInventory(false));
       document.getElementById('fuse-close').addEventListener('click', () => this.toggleFuse(false));
+      document.getElementById('settings-close').addEventListener('click', () => this.toggleSettings(false));
+      document.getElementById('settings-btn').addEventListener('click', () => this.toggleSettings());
+      window.G.Config.onChange(() => { this.updateAbilityHints(); if (!this.settingsModal.classList.contains('hidden')) this.renderSettings(); });
+      this.updateAbilityHints();
     }
 
     buildHotbar() {
@@ -215,8 +223,122 @@
       return open;
     }
 
+    toggleSettings(force) {
+      const open = force !== undefined ? force : this.settingsModal.classList.contains('hidden');
+      this.settingsModal.classList.toggle('hidden', !open);
+      if (open) this.renderSettings();
+      return open;
+    }
+
     anyModalOpen() {
-      return !this.invModal.classList.contains('hidden') || !this.fuseModal.classList.contains('hidden');
+      return !this.invModal.classList.contains('hidden') ||
+             !this.fuseModal.classList.contains('hidden') ||
+             !this.settingsModal.classList.contains('hidden');
+    }
+
+    renderSettings() {
+      const Config = window.G.Config;
+      const FEATURE_LABELS = window.G.FEATURE_LABELS;
+      const ACTION_LABELS = window.G.ACTION_LABELS;
+      const body = this.settingsBody;
+      body.innerHTML = '';
+
+      const addHeading = (text) => {
+        const h = document.createElement('h3');
+        h.textContent = text;
+        body.appendChild(h);
+      };
+      const addRow = (el) => { const row = document.createElement('div'); row.className = 'settings-row'; row.appendChild(el); body.appendChild(row); return row; };
+
+      addHeading('⚙️ Fähigkeiten');
+      for (const key in FEATURE_LABELS) {
+        const row = document.createElement('label');
+        row.className = 'settings-row toggle-row';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = !!Config.features[key];
+        cb.addEventListener('change', () => {
+          Config.set('features.' + key, cb.checked);
+          if (key === 'ambientOcclusion') { /* handled in graphics */ }
+          if (key === 'infiniteWorld' && window.__debug) window.__debug.world.enforceBounds();
+        });
+        const span = document.createElement('span');
+        span.textContent = FEATURE_LABELS[key];
+        row.appendChild(cb); row.appendChild(span);
+        body.appendChild(row);
+      }
+
+      addHeading('🖼️ Grafik');
+      const rdRow = document.createElement('div'); rdRow.className = 'settings-row';
+      const rdLabel = document.createElement('span'); rdLabel.textContent = 'Sichtweite (Chunks): ' + Config.graphics.renderDistance;
+      const rdSlider = document.createElement('input');
+      rdSlider.type = 'range'; rdSlider.min = 2; rdSlider.max = 8; rdSlider.value = Config.graphics.renderDistance;
+      rdSlider.addEventListener('input', () => {
+        Config.set('graphics.renderDistance', parseInt(rdSlider.value, 10));
+        rdLabel.textContent = 'Sichtweite (Chunks): ' + rdSlider.value;
+      });
+      rdRow.appendChild(rdLabel); rdRow.appendChild(rdSlider);
+      body.appendChild(rdRow);
+
+      const aoRow = document.createElement('label'); aoRow.className = 'settings-row toggle-row';
+      const aoCb = document.createElement('input'); aoCb.type = 'checkbox'; aoCb.checked = Config.graphics.ambientOcclusion;
+      aoCb.addEventListener('change', () => {
+        Config.set('graphics.ambientOcclusion', aoCb.checked);
+        if (window.__debug) window.__debug.world.markAllDirty();
+      });
+      aoRow.appendChild(aoCb); aoRow.appendChild(Object.assign(document.createElement('span'), { textContent: 'Ambient Occlusion (Ecken-Schattierung)' }));
+      body.appendChild(aoRow);
+
+      const shRow = document.createElement('label'); shRow.className = 'settings-row toggle-row';
+      const shCb = document.createElement('input'); shCb.type = 'checkbox'; shCb.checked = Config.graphics.subtleShaders;
+      shCb.addEventListener('change', () => {
+        Config.set('graphics.subtleShaders', shCb.checked);
+        if (window.__debug) window.__debug.world.applyGraphicsSettings(window.__debug.renderer);
+      });
+      shRow.appendChild(shCb); shRow.appendChild(Object.assign(document.createElement('span'), { textContent: 'Dezente Shader (Wasser-Wellen, Glüh-Puls, Tonemapping)' }));
+      body.appendChild(shRow);
+
+      addHeading('⌨️ Tasten');
+      for (const action in ACTION_LABELS) {
+        const row = document.createElement('div'); row.className = 'settings-row keybind-row';
+        const label = document.createElement('span'); label.textContent = ACTION_LABELS[action];
+        const btn = document.createElement('button'); btn.className = 'action-btn keybind-btn';
+        btn.textContent = window.G.InputManager.codeLabel(Config.controls[action]);
+        btn.addEventListener('click', () => {
+          btn.textContent = 'Drücke eine Taste…';
+          this.input.startRebind(action, (code) => {
+            btn.textContent = window.G.InputManager.codeLabel(code || Config.controls[action]);
+          });
+        });
+        row.appendChild(label); row.appendChild(btn);
+        body.appendChild(row);
+      }
+
+      const resetBtn = document.createElement('button');
+      resetBtn.className = 'action-btn'; resetBtn.textContent = 'Alles zurücksetzen';
+      resetBtn.style.marginTop = '10px';
+      resetBtn.addEventListener('click', () => { Config.reset(); this.renderSettings(); });
+      body.appendChild(resetBtn);
+    }
+
+    updateAbilityHints() {
+      const Config = window.G.Config;
+      const codeLabel = window.G.InputManager.codeLabel;
+      const list = [
+        ['ultrahand', 'Ultrahand'], ['ascend', 'Ascend'], ['recall', 'Recall'],
+        ['fuseMenu', 'Fusion'], ['paraglider', 'Gleitschirm (Shift, in der Luft)'],
+      ];
+      let html = '';
+      for (const [feat, label] of list) {
+        if (feat === 'paraglider') {
+          if (Config.features.paraglider) html += `<div>${codeLabel(Config.controls.sprintGlide)} — ${label}</div>`;
+          continue;
+        }
+        if (!Config.features[feat]) continue;
+        const action = feat === 'fuseMenu' ? 'fuseMenu' : feat;
+        html += `<div>${codeLabel(Config.controls[action])} — ${label}</div>`;
+      }
+      this.abilityHints.innerHTML = html;
     }
 
     showDeath(show) {

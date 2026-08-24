@@ -182,7 +182,7 @@
         const r = minR + Math.random() * (maxR - minR);
         const x = Math.floor(px + Math.cos(ang) * r);
         const z = Math.floor(pz + Math.sin(ang) * r);
-        if (x < 2 || z < 2 || x > window.G.WORLD_SIZE - 3 || z > window.G.WORLD_SIZE - 3) continue;
+        if (!this.world.isChunkLoaded(x, z)) continue;
         const y = this.world.findSurfaceY(x, z);
         if (y <= window.G.SEA_LEVEL) continue;
         return { x: x + 0.5, y: y + 1, z: z + 0.5 };
@@ -193,11 +193,12 @@
     countType(cls) { return this.entities.filter((e) => e instanceof cls && e.alive).length; }
 
     update(dt, player, isNight) {
-      if (isNight && this.countType(Bokoblin) < this.maxHostile && Math.random() < dt * 0.4) {
+      const spawningOn = window.G.Config.features.mobSpawning;
+      if (spawningOn && isNight && this.countType(Bokoblin) < this.maxHostile && Math.random() < dt * 0.4) {
         const spot = this.findSpawnSpot(player.pos.x, player.pos.z, 14, 26);
         if (spot) this.spawn(new Bokoblin(this.world, spot.x, spot.y, spot.z));
       }
-      if (!isNight && this.countType(Cow) < this.maxPassive && Math.random() < dt * 0.25) {
+      if (spawningOn && !isNight && this.countType(Cow) < this.maxPassive && Math.random() < dt * 0.25) {
         const spot = this.findSpawnSpot(player.pos.x, player.pos.z, 10, 22);
         if (spot) this.spawn(new Cow(this.world, spot.x, spot.y, spot.z));
       }

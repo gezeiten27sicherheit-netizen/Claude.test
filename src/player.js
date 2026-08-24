@@ -1,10 +1,11 @@
-// Player controller: TOTK-style movement (stamina, climbing, gliding) fused with
-// Minecraft-style mining/placing/combat and an inventory.
+// Player controller: TOTK-style movement/abilities fused with Minecraft-style
+// mining/placing/combat and an inventory. Every ability is feature-toggle gated.
 (function () {
   const BLOCK = window.G.BLOCK;
   const BLOCK_DATA = window.G.BLOCK_DATA;
   const ITEMS = window.G.ITEMS;
   const moveWithCollision = window.G.moveWithCollision;
+  const Config = window.G.Config;
 
   class Player {
     constructor(world, camera) {
@@ -30,6 +31,11 @@
       this.fallStartY = this.pos.y;
       this.hadGlideThisFall = false;
 
+      this.ascending = false;
+      this.ascendTargetY = 0;
+      this.heldProp = null;
+      this.holdDistance = 2.4;
+
       this.inventory = Array.from({ length: 27 }, () => ({ id: null, count: 0 }));
       this.selected = 0;
       this.miningProgress = 0;
@@ -45,6 +51,7 @@
       this.climbSpeed = 2.4;
       this.glideFallSpeed = -2.6;
       this.glideSpeed = 8.5;
+      this.ascendSpeed = 5.5;
     }
 
     addItem(id, count) {
@@ -89,9 +96,9 @@
 
     damageSelectedItem() {
       const s = this.inventory[this.selected];
-      if (!s || !s.id) return;
+      if (!s || !s.id) return null;
       const def = ITEMS[s.id];
-      if (def.unbreakable || def.durability === undefined) return;
+      if (def.unbreakable || def.durability === undefined) return null;
       s.dur -= 1;
       if (s.dur <= 0) {
         this.inventory[this.selected] = { id: null, count: 0 };
@@ -101,6 +108,7 @@
     }
 
     fuseItems(idxA, idxB) {
+      if (!Config.features.fuse) return { ok: false, msg: 'Fusion ist deaktiviert.' };
       if (idxA === idxB) return { ok: false, msg: 'Wähle zwei verschiedene Slots.' };
       const a = this.inventory[idxA], b = this.inventory[idxB];
       if (!a || !a.id || !b || !b.id) return { ok: false, msg: 'Beide Slots brauchen Gegenstände.' };
@@ -137,6 +145,8 @@
       this.dead = false;
       this.isClimbing = false;
       this.isGliding = false;
+      this.ascending = false;
+      if (this.heldProp) { this.heldProp.release(); this.heldProp = null; }
     }
 
     checkClimbAhead(forward) {
@@ -153,9 +163,11 @@
              by + 1 > this.pos.y && by < this.pos.y + this.height;
     }
 
-    update(dt, keys, mouseDelta) {
+    update(dt, input) {
       if (this.dead) return;
+      const F = Config.features;
 
+      const mouseDelta = input.consumeMouseDelta();
       this.yaw -= mouseDelta.x * 0.0022;
       this.pitch -= mouseDelta.y * 0.0022;
       const limit = Math.PI / 2 - 0.05;
@@ -168,30 +180,42 @@
       const right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
       right.y = 0; right.normalize();
 
+      // --- Ascend: phase up through a ceiling and surface on top of it. ---
+      if (this.ascending) {
+        this.pos.y += this.ascendSpeed * dt;
+        if (this.pos.y >= this.ascendTargetY) {
+          this.pos.y = this.ascendTargetY;
+          this.ascending = false;
+          this.vel.set(0, 0, 0);
+        }
+        this.camera.position.set(this.pos.x, this.pos.y + this.eyeHeight, this.pos.z);
+        return;
+      }
+
       const moveInput = new THREE.Vector3();
-      if (keys['KeyW']) moveInput.add(forward);
-      if (keys['KeyS']) moveInput.sub(forward);
-      if (keys['KeyD']) moveInput.add(right);
-      if (keys['KeyA']) moveInput.sub(right);
+      if (input.down('moveForward')) moveInput.add(forward);
+      if (input.down('moveBack')) moveInput.sub(forward);
+      if (input.down('moveRight')) moveInput.add(right);
+      if (input.down('moveLeft')) moveInput.sub(right);
       if (moveInput.lengthSq() > 0) moveInput.normalize();
 
-      const wantSprint = !!(keys['ShiftLeft'] || keys['ShiftRight']);
-      const canClimb = this.checkClimbAhead(forward);
-      const wantClimb = keys['Space'] && canClimb && !this.onGround && this.stamina > 0;
+      const wantSprint = input.down('sprintGlide');
+      const canClimb = F.climbing && this.checkClimbAhead(forward);
+      const wantClimb = F.climbing && input.down('jump') && canClimb && !this.onGround && this.stamina > 0;
 
       if (wantClimb) { this.isClimbing = true; }
-      else if (this.isClimbing && (!keys['Space'] || !canClimb)) { this.isClimbing = false; }
+      else if (this.isClimbing && (!input.down('jump') || !canClimb)) { this.isClimbing = false; }
 
       if (this.isClimbing) {
         this.isGliding = false;
         this.vel.set(0, this.climbSpeed, 0);
         this.stamina -= 22 * dt; this.staminaRegenTimer = 0.6;
         if (this.stamina <= 0) { this.stamina = 0; this.isClimbing = false; }
-      } else if (!this.onGround && wantSprint && this.stamina > 0) {
+      } else if (F.paraglider && !this.onGround && wantSprint && this.stamina > 0) {
         this.isGliding = true;
         this.hadGlideThisFall = true;
         if (this.vel.y < this.glideFallSpeed) this.vel.y = this.glideFallSpeed;
-        const strafe = (keys['KeyD'] ? 1 : 0) - (keys['KeyA'] ? 1 : 0);
+        const strafe = (input.down('moveRight') ? 1 : 0) - (input.down('moveLeft') ? 1 : 0);
         const horiz = forward.clone().multiplyScalar(this.glideSpeed)
           .addScaledVector(right, strafe * this.glideSpeed * 0.5);
         this.vel.x = horiz.x; this.vel.z = horiz.z;
@@ -209,7 +233,7 @@
         this.vel.z = moveInput.z * speed;
         this.vel.y -= this.gravity * dt;
         if (this.vel.y < -40) this.vel.y = -40;
-        if (this.onGround && keys['Space'] && !canClimb) {
+        if (this.onGround && input.down('jump') && !canClimb) {
           this.vel.y = this.jumpSpeed;
           this.onGround = false;
         }
@@ -222,16 +246,17 @@
 
       if (this.onGround && !wasOnGround) {
         const fallDist = this.fallStartY - this.pos.y;
-        if (fallDist > 4 && !this.hadGlideThisFall) {
+        if (F.fallDamage && fallDist > 4 && !this.hadGlideThisFall) {
           this.takeDamage(Math.round((fallDist - 4) * 4));
         }
         this.isGliding = false; this.isClimbing = false;
       }
 
-      // Soft world-edge barrier.
-      const margin = 1.2, max = window.G.WORLD_SIZE - 1.2;
-      this.pos.x = Math.max(margin, Math.min(max, this.pos.x));
-      this.pos.z = Math.max(margin, Math.min(max, this.pos.z));
+      if (!Config.features.infiniteWorld) {
+        const max = (this.world.boundedRadius * window.G.CHUNK_SIZE) - 1.2;
+        this.pos.x = Math.max(-max, Math.min(max, this.pos.x));
+        this.pos.z = Math.max(-max, Math.min(max, this.pos.z));
+      }
       if (this.pos.y < -8) this.takeDamage(1000); // fell into the void
 
       if (this.staminaRegenTimer > 0) this.staminaRegenTimer -= dt;
@@ -243,15 +268,91 @@
 
       if (this.attackCooldown > 0) this.attackCooldown -= dt;
       if (this.hurtFlash > 0) this.hurtFlash -= dt;
+
+      if (this.heldProp) {
+        const dir = new THREE.Vector3();
+        this.camera.getWorldDirection(dir);
+        const hp = this.camera.position.clone().addScaledVector(dir, this.holdDistance);
+        this.heldProp.pos.set(hp.x, hp.y, hp.z);
+      }
+    }
+
+    // --- Ultrahand / Ascend / Recall: gated by feature toggles, edge-triggered via input. ---
+    updateAbilities(input, blockHit, propsManager, toast) {
+      const F = Config.features;
+
+      if (F.ascend && input.justPressed('ascend') && !this.ascending) {
+        if (this.stamina >= 10) {
+          const origin = new THREE.Vector3(this.pos.x, this.pos.y + this.height * 0.9, this.pos.z);
+          const rc = this.world.raycast(origin, new THREE.Vector3(0, 1, 0), 14);
+          if (rc) {
+            let ty = rc.y + 1;
+            const bx = Math.floor(this.pos.x), bz = Math.floor(this.pos.z);
+            while (ty < window.G.WORLD_HEIGHT - 2 && this.world.isSolid(bx, ty, bz)) ty++;
+            if (ty < window.G.WORLD_HEIGHT - 2) {
+              this.ascending = true; this.ascendTargetY = ty; this.stamina -= 10;
+              toast('Ascend!');
+            } else toast('Kein Platz zum Auftauchen.');
+          } else toast('Keine Decke über dir.');
+        } else toast('Nicht genug Ausdauer.');
+      }
+
+      if (F.ultrahand && input.justPressed('ultrahand')) {
+        if (this.heldProp) {
+          const p = this.heldProp.pos;
+          const gx = Math.round(p.x - 0.5), gy = Math.round(p.y), gz = Math.round(p.z - 0.5);
+          if (this.world.getBlock(gx, gy, gz) === BLOCK.AIR && !this.intersectsPlayer(gx, gy, gz)) {
+            this.world.setBlock(gx, gy, gz, this.heldProp.blockId);
+            propsManager.remove(this.heldProp);
+            this.heldProp = null;
+            toast('Objekt angebracht.');
+          } else {
+            toast('Hier passt es nicht hin.');
+          }
+        } else {
+          const dir = new THREE.Vector3();
+          this.camera.getWorldDirection(dir);
+          const loose = propsManager.findTarget(this.camera.position, dir, 5, Math.cos(THREE.MathUtils.degToRad(30)));
+          if (loose) {
+            this.heldProp = loose;
+            loose.startGrab();
+            toast('Ultrahand: Objekt gegriffen.');
+          } else if (blockHit) {
+            const bd = BLOCK_DATA[blockHit.id];
+            if (bd && blockHit.id !== BLOCK.SHRINE_GLOW && blockHit.id !== BLOCK.AIR) {
+              this.world.setBlock(blockHit.x, blockHit.y, blockHit.z, BLOCK.AIR);
+              this.heldProp = propsManager.spawnFromBlock(blockHit.x, blockHit.y, blockHit.z, blockHit.id);
+              this.heldProp.startGrab();
+              toast('Ultrahand: Block gegriffen.');
+            }
+          }
+        }
+      }
+
+      if (F.recall && input.justPressed('recall')) {
+        const dir = new THREE.Vector3();
+        this.camera.getWorldDirection(dir);
+        const prop = propsManager.findTarget(this.camera.position, dir, 7, Math.cos(THREE.MathUtils.degToRad(25)));
+        if (prop) {
+          if (prop.recalling) { prop.stopRecall(); toast('Recall beendet.'); }
+          else {
+            const ok = prop.startRecall();
+            toast(ok ? 'Recall: Objekt spult zurück…' : 'Keine Bewegungshistorie vorhanden.');
+          }
+        } else toast('Kein Objekt im Blick.');
+      }
     }
 
     // blockHit: world.raycast() result | null. mobHit: Entity | null.
     interact(dt, blockHit, mobHit, leftDown, rightEdge, callbacks) {
+      const F = Config.features;
       const slot = this.inventory[this.selected];
       const def = slot && slot.id ? ITEMS[slot.id] : null;
 
+      if (leftDown && this.heldProp) { leftDown = false; } // hands are full while carrying with Ultrahand
+
       if (leftDown) {
-        if (mobHit) {
+        if (mobHit && F.combat) {
           this.miningProgress = 0; this.miningTarget = null;
           if (this.attackCooldown <= 0) {
             const dmg = (def && def.damage) ? def.damage : 4;
@@ -260,7 +361,7 @@
             const broke = this.damageSelectedItem();
             if (broke) callbacks.toast(broke + ' ist zerbrochen!');
           }
-        } else if (blockHit) {
+        } else if (blockHit && F.mining) {
           const bd = BLOCK_DATA[blockHit.id];
           if (bd && bd.breakTime < 900) {
             const key = blockHit.x + ',' + blockHit.y + ',' + blockHit.z;
@@ -285,8 +386,8 @@
         this.miningProgress = 0; this.miningTarget = null;
       }
 
-      if (rightEdge) {
-        if (def && def.type === 'block' && blockHit) {
+      if (rightEdge && !this.heldProp) {
+        if (def && def.type === 'block' && blockHit && F.placing) {
           const px = blockHit.x + blockHit.nx, py = blockHit.y + blockHit.ny, pz = blockHit.z + blockHit.nz;
           if (!this.intersectsPlayer(px, py, pz)) {
             this.world.setBlock(px, py, pz, def.block);
