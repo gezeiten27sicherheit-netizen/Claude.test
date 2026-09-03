@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BlockForge Kurs — Minecraft Modding lernen</title>
+<meta name="description" content="Interaktiver Kurs für Minecraft-Modding: Fortschritt einschätzen, Loader wählen, Setup abhaken und in kleinen Übungen loslegen." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%236fce4f'/><rect y='9' width='16' height='7' fill='%238a5a3b'/></svg>" />
+<link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="kurs.css" />
+</head>
+<body class="kurs-body">
+
+<div class="progress" aria-hidden="true"><i id="progress-bar"></i></div>
+
+<header class="nav stuck" id="nav">
+  <a class="brand" href="index.html">
+    <span class="brand-cube" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span class="brand-name">Block<em>Forge</em></span>
+  </a>
+  <nav class="nav-links" aria-label="Hauptnavigation">
+    <a href="index.html#loader">Loader</a>
+    <a href="index.html#code">Code</a>
+    <a href="kurs.html" class="active">Kurs</a>
+  </nav>
+  <button class="btn btn-sm btn-ghost" id="reset-btn" type="button">Neu starten</button>
+  <button class="nav-burger" id="burger" aria-label="Menü umschalten" aria-expanded="false">
+    <span></span><span></span>
+  </button>
+</header>
+
+<main class="kurs" id="kurs">
+
+  <!-- ══════════ ONBOARDING ══════════ -->
+  <section class="screen" id="screen-intro" data-screen="intro">
+    <div class="stage">
+      <div class="kobo-stage">
+        <div class="kobo kobo-lg" id="intro-kobo" aria-hidden="true"></div>
+        <p class="bubble">
+          Moin! Ich bin <b>Kobo</b>. Ich hocke seit Jahren in diesem Schacht und
+          schraube an Mods. Ich stelle dir fünf kurze Fragen, dann baue ich dir
+          deinen Lernpfad.
+        </p>
+      </div>
+      <h1>Minecraft-Modding, in kleinen Häppchen</h1>
+      <p class="lede">
+        Kein 40-Minuten-Video. Kurze Übungen, die du auch in der Bahn schaffst —
+        und wenn du willst, parallel ein echtes Projekt in der IDE.
+      </p>
+      <button class="btn btn-lg" id="start-btn" type="button">Los geht's <span class="arr">→</span></button>
+      <p class="muted-note" id="resume-note" hidden>
+        <button class="link-btn" id="resume-btn" type="button">Da war schon ein Fortschritt — weitermachen</button>
+      </p>
+    </div>
+  </section>
+
+  <section class="screen" id="screen-quiz" data-screen="quiz" hidden>
+    <div class="stage">
+      <div class="steps" id="steps" aria-hidden="true"></div>
+      <div class="kobo-stage kobo-stage-sm">
+        <div class="kobo" id="quiz-kobo" aria-hidden="true"></div>
+        <p class="bubble" id="quiz-bubble"></p>
+      </div>
+      <h2 id="quiz-question"></h2>
+      <p class="quiz-sub" id="quiz-sub"></p>
+      <div class="options" id="quiz-options" role="group"></div>
+      <div class="stage-nav">
+        <button class="btn btn-ghost" id="quiz-back" type="button">Zurück</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ SETUP ══════════ -->
+  <section class="screen" id="screen-setup" data-screen="setup" hidden>
+    <div class="stage stage-wide">
+      <div class="kobo-stage kobo-stage-sm">
+        <div class="kobo" id="setup-kobo" aria-hidden="true"></div>
+        <p class="bubble" id="setup-bubble"></p>
+      </div>
+      <h2>Deine Werkbank einrichten</h2>
+      <p class="lede" id="setup-lede"></p>
+
+      <div class="setup-grid">
+        <ol class="setup-list" id="setup-list"></ol>
+        <aside class="setup-detail" id="setup-detail" aria-live="polite"></aside>
+      </div>
+
+      <div class="setup-foot">
+        <div class="setup-count" id="setup-count"></div>
+        <button class="btn btn-lg" id="setup-done" type="button" disabled>Weiter zu den Übungen</button>
+        <button class="link-btn" id="setup-skip" type="button">Später einrichten, jetzt nur Rätsel</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ LERNPFAD ══════════ -->
+  <section class="screen" id="screen-map" data-screen="map" hidden>
+    <div class="stage stage-wide">
+      <div class="dash">
+        <div class="dash-kobo">
+          <div class="kobo" id="map-kobo" aria-hidden="true"></div>
+        </div>
+        <div class="dash-stats">
+          <p class="bubble bubble-flat" id="map-bubble"></p>
+          <div class="stat-row">
+            <div class="stat"><b id="stat-xp">0</b><span>XP</span></div>
+            <div class="stat"><b id="stat-done">0</b><span>Lektionen</span></div>
+            <div class="stat"><b id="stat-streak">0</b><span>Tage Serie</span></div>
+          </div>
+          <div class="profile-chips" id="profile-chips"></div>
+        </div>
+      </div>
+
+      <h2>Dein Lernpfad</h2>
+      <ol class="path" id="path"></ol>
+
+      <div class="editor-tasks" id="editor-tasks" hidden>
+        <h3>Parallel in der IDE</h3>
+        <p class="lede">Zu jeder Lektion eine echte Aufgabe im Projekt. Abhaken, wenn sie läuft.</p>
+        <ul class="task-list" id="task-list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ LEKTION ══════════ -->
+  <section class="screen screen-lesson" id="screen-lesson" data-screen="lesson" hidden>
+    <div class="lesson-bar">
+      <button class="icon-btn" id="lesson-quit" type="button" aria-label="Lektion verlassen">✕</button>
+      <div class="lesson-track" aria-hidden="true"><i id="lesson-fill"></i></div>
+      <div class="hearts" id="hearts" aria-label="Verbleibende Versuche"></div>
+    </div>
+
+    <div class="lesson-body">
+      <div class="lesson-inner">
+        <p class="ex-kind" id="ex-kind"></p>
+        <h2 class="ex-q" id="ex-q"></h2>
+        <div class="ex-area" id="ex-area"></div>
+      </div>
+    </div>
+
+    <div class="lesson-foot" id="lesson-foot">
+      <div class="lesson-inner lesson-foot-inner">
+        <div class="feedback" id="feedback" hidden>
+          <div class="kobo kobo-sm" id="fb-kobo" aria-hidden="true"></div>
+          <div>
+            <b id="fb-title"></b>
+            <p id="fb-text"></p>
+          </div>
+        </div>
+        <button class="btn btn-lg btn-block" id="check-btn" type="button" disabled>Prüfen</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ ERGEBNIS ══════════ -->
+  <section class="screen" id="screen-result" data-screen="result" hidden>
+    <div class="stage">
+      <div class="kobo kobo-lg kobo-cheer" id="result-kobo" aria-hidden="true"></div>
+      <h2 id="result-title"></h2>
+      <p class="lede" id="result-text"></p>
+      <div class="stat-row stat-row-center">
+        <div class="stat"><b id="result-xp">0</b><span>XP verdient</span></div>
+        <div class="stat"><b id="result-acc">0%</b><span>richtig</span></div>
+      </div>
+      <div class="result-cta">
+        <button class="btn btn-lg" id="result-next" type="button">Weiter</button>
+        <button class="link-btn" id="result-again" type="button">Lektion wiederholen</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-in">
+    <span>BlockForge — ein Fan-Projekt. Nicht mit Mojang oder Microsoft verbunden.</span>
+    <span class="footer-links">
+      <a href="index.html">Startseite</a>
+      <a href="index.html#faq">FAQ</a>
+    </span>
+  </div>
+</footer>
+
+<script src="kurs.js"></script>
+</body>
+</html>

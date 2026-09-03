@@ -18,9 +18,68 @@ python3 -m http.server 8000
 
 | Datei | Inhalt |
 |---|---|
-| `index.html` | Struktur und Inhalte aller Sektionen |
+| `index.html` | Landingpage — Struktur und Inhalte aller Sektionen |
 | `style.css` | Design-Tokens, Layout, alle Transitions und Keyframes |
 | `script.js` | Scroll-Logik, Canvas-Hintergrund, Syntax-Highlighting |
+| `kurs.html` | Interaktiver Kurs — Onboarding, Setup, Lernpfad, Übungen |
+| `kurs.css` | Styles des Kurses, baut auf den Tokens aus `style.css` auf |
+| `kurs.js` | Maskottchen, Lehrplan, Übungs-Engine, Fortschritt |
+
+## Der Kurs
+
+`kurs.html` führt in fünf Fragen durch das Onboarding und baut daraus einen
+Lernpfad. Durch alles begleitet **Kobo**, ein Kobold mit Grasblock-Kappe und
+Grubenlampe — als 16×16-Pixelraster in `kurs.js` definiert und zur Laufzeit als
+SVG gezeichnet, mit vier Stimmungen (`idle`, `happy`, `sad`, `think`).
+
+### Ablauf
+
+1. **Wo stehst du?** — von „noch gar nicht programmiert" bis „schon
+   veröffentlicht". Wer schon veröffentlicht hat, bekommt alle Lektionen sofort
+   freigeschaltet, alle anderen arbeiten sich der Reihe nach vor.
+2. **Womit willst du bauen?** — Fabric, NeoForge, Forge oder „weiß ich noch
+   nicht" (wird zu Fabric).
+3. **Wie willst du lernen?** — nur Rätsel im Browser, oder zusätzlich eine
+   Aufgabenliste für die IDE.
+4. **Mods oder Plugins?**
+5. **Ist alles installiert?** — bei „nein" oder „teilweise" geht es zur
+   Setup-Checkliste.
+
+Bei **Plugins** wird die Loader-Antwort sichtbar durch Paper ersetzt: Plugins
+laufen serverseitig und brauchen keinen Mod-Loader. Der Hinweis steht als Chip
+auf dem Lernpfad, damit die Umstellung nachvollziehbar bleibt.
+
+### Setup-Checkliste
+
+Die Liste stellt sich aus der gewählten Plattform zusammen. Ein Klick auf einen
+Eintrag öffnet rechts das Detail: wozu das Werkzeug gut ist, ein Link zur
+offiziellen Bezugsquelle, die Schritte und — wo sinnvoll — ein Befehl zum
+Kopieren. Erst wenn alle Pflicht-Einträge abgehakt sind, öffnet sich der
+Lernpfad. Wer will, überspringt das Setup und macht nur die Browser-Rätsel.
+
+### Übungen
+
+Vier Aufgabentypen, definiert als Daten in `kurs.js`:
+
+| Typ | Bedienung |
+|---|---|
+| `choice` | Eine von vier Antworten — Optionen werden bei jedem Aufruf gemischt |
+| `gap` | Wortkacheln in Code-Lücken tippen, Antippen einer Lücke nimmt sie zurück |
+| `order` | Zeilen in die richtige Reihenfolge bringen |
+| `input` | Freie Eingabe, Vergleich ohne Leerzeichen und Groß-/Kleinschreibung |
+
+Pro Lektion drei Herzen. Jede richtige Antwort gibt 10 XP, das erste Bestehen
+einer Lektion zusätzlich 20. Nach jeder Antwort erklärt Kobo, warum sie richtig
+oder falsch war — auch bei richtigen Antworten, weil dort der eigentliche
+Lerninhalt steckt. Die Lektionen für Item, Blöcke und Events zeigen echten Code
+der gewählten Plattform, kein Pseudo-Beispiel.
+
+### Fortschritt
+
+Alles liegt unter dem localStorage-Schlüssel `blockforge.kurs.v1`: Antworten,
+abgehakte Werkzeuge, erledigte Lektionen und IDE-Aufgaben, XP und Tagesserie.
+Ist der Speicher blockiert (privater Modus), läuft der Kurs trotzdem — dann eben
+ohne gespeicherten Fortschritt. „Neu starten" oben rechts löscht alles.
 
 ## Animationen
 
