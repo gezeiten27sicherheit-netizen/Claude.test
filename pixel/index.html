@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#14101f" />
+<title>Moosklinge - Pixel-Abenteuer</title>
+<link rel="icon" href="data:," />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="frame">
+  <canvas id="game" width="384" height="216"></canvas>
+  <div id="loading">LADE ...</div>
+</div>
+
+<div id="touch">
+  <div class="pad">
+    <div class="tbtn" id="btn-left">&#9664;</div>
+    <div class="tbtn" id="btn-right">&#9654;</div>
+  </div>
+  <div class="pad right">
+    <div class="tbtn wide" id="btn-attack">HIEB</div>
+    <div class="tbtn wide" id="btn-jump">SPRUNG</div>
+  </div>
+</div>
+<div id="btn-pause" class="tbtn corner">II</div>
+
+<p id="hint">Pfeile / WASD laufen &middot; Leertaste springen &middot; J oder X schlagen &middot; P Pause &middot; M Ton</p>
+
+<script src="src/util.js"></script>
+<script src="src/font.js"></script>
+<script src="src/sprites.js"></script>
+<script src="src/tiles.js"></script>
+<script src="src/scenery.js"></script>
+<script src="src/audio.js"></script>
+<script src="src/input.js"></script>
+<script src="src/levels.js"></script>
+<script src="src/world.js"></script>
+<script src="src/entities.js"></script>
+<script src="src/player.js"></script>
+<script src="src/game.js"></script>
+<script>PX.start();</script>
+</body>
+</html>

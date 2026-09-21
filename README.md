@@ -92,3 +92,9 @@ src/player.js           Bewegung, Ausdauer, Fähigkeiten, Kampf, Inventar
 src/ui.js               HUD, Inventar-/Fusions-/Einstellungs-Overlay
 src/main.js             Szene, Beleuchtung, Tag/Nacht, Input-Verdrahtung, Game-Loop
 ```
+
+## Weitere Spiele in diesem Repo
+
+- **[Moosklinge](pixel/)** — ein 2D-Pixel-Art-Jump-and-Run (`pixel/index.html`): drei Zonen,
+  Schwertkampf, Stampf-Angriffe, fahrende Plattformen, Chiptune-Musik. Ebenfalls ohne
+  externe Assets — alle Sprites, Kacheln, Hintergründe und Klänge entstehen im Code.
