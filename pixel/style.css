@@ -121,3 +121,19 @@ body.touch #hint { display: none; }
 @media (max-width: 820px) {
   #hint { font-size: 10px; }
 }
+
+/* Querformat auf dem Handy: flachere, dezentere Tasten, damit vom Spielfeld
+   moeglichst wenig verdeckt wird. */
+@media (max-height: 460px) {
+  body { gap: 0; }
+  #frame { padding: 3px; box-shadow: 0 0 0 2px #2c2440; }
+  #touch { padding: 8px 10px 10px; }
+  .tbtn {
+    min-width: 50px;
+    height: 46px;
+    font-size: 13px;
+    opacity: 0.82;
+  }
+  .tbtn.wide { min-width: 64px; }
+  .tbtn.corner { min-width: 34px; height: 34px; top: 6px; right: 6px; }
+}

@@ -484,11 +484,17 @@
 
   // ------------------------------------------------------------ Skalierung -
   function resize() {
-    const pad = 16;
-    const sx = (window.innerWidth - pad) / VIEW_W;
-    const sy = (window.innerHeight - pad) / VIEW_H;
-    let scale = Math.min(sx, sy);
-    scale = scale >= 1 ? Math.floor(scale) : Math.max(0.35, scale);
+    // Auf dem Desktop ganzzahlig skalieren (knackscharfe Pixel). Auf Handys
+    // waere das viel verschenkte Flaeche, dort auf ganze Geraetepixel runden -
+    // das sieht bei hoher Pixeldichte genauso sauber aus.
+    const dpr = window.devicePixelRatio || 1;
+    const touchLayout = document.body.classList.contains('touch');
+    const padX = touchLayout ? 8 : 16;
+    const padY = touchLayout ? 8 : 16;
+    const raw = Math.min((window.innerWidth - padX) / VIEW_W, (window.innerHeight - padY) / VIEW_H);
+    // Verkleinern wird nie gerastert, sonst bliebe auf kleinen Displays zu
+    // viel Flaeche ungenutzt.
+    const scale = raw >= 1 ? Math.max(1, Math.floor(raw * dpr) / dpr) : Math.max(0.3, raw);
     canvas.style.width = Math.round(VIEW_W * scale) + 'px';
     canvas.style.height = Math.round(VIEW_H * scale) + 'px';
   }
@@ -521,7 +527,9 @@
     PX.input.init();
     loadSave();
     resize();
+    setTimeout(resize, 50);
     window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', () => setTimeout(resize, 120));
     // Titelbild braucht eine Welt fuer den Hintergrund nicht - nur Kulisse.
     game.state = 'title';
     const unlock = () => PX.audio.unlock();

@@ -33,7 +33,39 @@ python3 -m http.server 8000
 | `M` | Ton an/aus |
 | `Enter` / `Leertaste` | Menüs bestätigen |
 
-Auf Handy und Tablet blendet sich automatisch ein Touch-Pad ein.
+Auf Handy und Tablet blendet sich automatisch ein Touch-Pad ein:
+
+| Taste auf dem Schirm | Aktion |
+|---|---|
+| `◀` `▶` unten links | Laufen |
+| `SPRUNG` unten rechts | Springen — länger gedrückt heißt höher |
+| `HIEB` unten rechts | Schwerthieb |
+| `II` oben rechts | Pause (nochmal tippen = weiter) |
+| `SPRUNG` oder `HIEB` | Menüs bestätigen, Zone neu starten |
+
+**Quer halten** lohnt sich: das Bild wird auf ganze Gerätepixel skaliert und füllt
+im Querformat deutlich mehr Fläche. Ton an/aus (`M`) und Zonen-Neustart (`R`) gibt
+es bisher nur auf der Tastatur.
+
+### Aufs Handy bekommen
+
+Am schnellsten über den Rechner im selben WLAN:
+
+```bash
+git clone -b claude/loving-euler-yoxxf8 https://github.com/gezeiten27sicherheit-netizen/Claude.test.git
+cd Claude.test
+python3 -m http.server 8000
+```
+
+Dann die lokale IP des Rechners ermitteln (`ipconfig getifaddr en0` auf macOS,
+`hostname -I` unter Linux, `ipconfig` unter Windows) und auf dem Handy
+`http://<IP-des-Rechners>:8000/pixel/` öffnen.
+
+Dauerhaft ohne Rechner: in den Repo-Einstellungen unter *Pages* als Quelle
+*Deploy from a branch* mit Branch `claude/loving-euler-yoxxf8` und Ordner `/ (root)`
+wählen — das Spiel liegt danach unter
+`https://gezeiten27sicherheit-netizen.github.io/Claude.test/pixel/`.
+Diese Adresse lässt sich auf dem Handy zum Homescreen hinzufügen.
 
 ## Spielprinzip
 
